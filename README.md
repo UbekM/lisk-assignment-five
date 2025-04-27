@@ -114,4 +114,4 @@ Your implementation will be evaluated based on:
 
 Submit both your completed `LotteryGame.sol` contract and the fixed test file. Make sure your code compiles without errors and passes all the provided tests.
 
-Good luck!
+Good luck!# lisk-assignment-five
