@@ -11,29 +11,33 @@ contract LotteryGame {
         bool active;
     }
 
-    // TODO: Declare state variables
-    // - Mapping for player information
-    // - Array to track player addresses
-    // - Total prize pool
-    // - Array for winners
-    // - Array for previous winners
+    // State variables
+    mapping(address => Player) public players;
+    address[] public playerAddresses;
+    address[] public winners;
+    address[] public previousWinners;
+    uint256 public totalPrize;
 
-    // TODO: Declare events
-    // - PlayerRegistered
-    // - GuessResult
-    // - PrizesDistributed
+    // Events
+    event PlayerRegistered(address player);
+    event GuessResult(address player, uint256 guess, bool correct);
+    event PrizesDistributed(uint256 prizeAmount, address[] winners);
 
     /**
      * @dev Register to play the game
      * Players must stake exactly 0.02 ETH to participate
      */
     function register() public payable {
-        // TODO: Implement registration logic
-        // - Verify correct payment amount
-        // - Add player to mapping
-        // - Add player address to array
-        // - Update total prize
-        // - Emit registration event
+        require(msg.value == 0.02 ether, "Please stake 0.02 ETH");
+        
+        // If already registered, no need to add again
+        require(!players[msg.sender].active, "Player already registered");
+
+        players[msg.sender] = Player(0, true);
+        playerAddresses.push(msg.sender);
+        totalPrize += msg.value;
+
+        emit PlayerRegistered(msg.sender);
     }
 
     /**
@@ -41,26 +45,45 @@ contract LotteryGame {
      * @param guess The player's guess
      */
     function guessNumber(uint256 guess) public {
-        // TODO: Implement guessing logic
-        // - Validate guess is between 1 and 9
-        // - Check player is registered and has attempts left
-        // - Generate "random" number
-        // - Compare guess with random number
-        // - Update player attempts
-        // - Handle correct guesses
-        // - Emit appropriate event
+        require(guess >= 1 && guess <= 9, "Number must be between 1 and 9");
+        require(players[msg.sender].active, "Player is not active");
+        require(players[msg.sender].attempts < 2, "Player has already made 2 attempts");
+
+        // Generate the "random" number
+        uint256 randomNumber = _generateRandomNumber();
+
+        // Check if guess is correct
+        bool isCorrect = guess == randomNumber;
+        if (isCorrect) {
+            winners.push(msg.sender);
+        }
+
+        // Update attempts and emit event
+        players[msg.sender].attempts++;
+        emit GuessResult(msg.sender, guess, isCorrect);
     }
 
     /**
      * @dev Distribute prizes to winners
      */
     function distributePrizes() public {
-        // TODO: Implement prize distribution logic
-        // - Calculate prize amount per winner
-        // - Transfer prizes to winners
-        // - Update previous winners list
-        // - Reset game state
-        // - Emit event
+        require(winners.length > 0, "No winners to distribute prizes to");
+
+        // Calculate prize amount per winner
+        uint256 prizePerWinner = totalPrize / winners.length;
+
+        // Transfer prizes to winners
+        for (uint256 i = 0; i < winners.length; i++) {
+            payable(winners[i]).transfer(prizePerWinner);
+        }
+
+        // Update previous winners list and reset game state
+        for (uint256 i = 0; i < winners.length; i++) {
+            previousWinners.push(winners[i]);
+        }
+        resetGame();
+
+        emit PrizesDistributed(prizePerWinner, winners);
     }
 
     /**
@@ -68,7 +91,7 @@ contract LotteryGame {
      * @return Array of previous winner addresses
      */
     function getPrevWinners() public view returns (address[] memory) {
-        // TODO: Return previous winners array
+        return previousWinners;
     }
 
     /**
@@ -78,5 +101,18 @@ contract LotteryGame {
      */
     function _generateRandomNumber() internal view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender))) % 9 + 1;
+    }
+
+    /**
+     * @dev Reset game state for a new round
+     */
+    function resetGame() internal {
+        delete winners;
+        totalPrize = 0;
+
+        // Reset players' attempts
+        for (uint256 i = 0; i < playerAddresses.length; i++) {
+            players[playerAddresses[i]].attempts = 0;
+        }
     }
 }
