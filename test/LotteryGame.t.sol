@@ -7,7 +7,7 @@ import "../src/LotteryGame.sol"; // change LotteryGame to LotteryGame
 contract LotteryGameTest is
     Test // change LotteryGame to LotteryGame
 {
-LotteryGame public game; // change LotteryGame to LotteryGame
+    LotteryGame public game; // change LotteryGame to LotteryGame
     address public owner;
     address public player1;
     address public player2;

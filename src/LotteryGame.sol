@@ -29,7 +29,7 @@ contract LotteryGame {
      */
     function register() public payable {
         require(msg.value == 0.02 ether, "Please stake 0.02 ETH");
-        
+
         // If already registered, no need to add again
         require(!players[msg.sender].active, "Player already registered");
 
